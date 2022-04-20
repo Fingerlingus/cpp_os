@@ -1,2 +1,4 @@
 **/limine
 **/build
+**/deps
+**/CMakeSettings.json
