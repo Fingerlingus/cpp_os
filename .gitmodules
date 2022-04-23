@@ -1,6 +1,0 @@
-[submodule "src/deps/libcxxrt"]
-	path = src/deps/libcxxrt
-	url = https://github.com/libcxxrt/libcxxrt.git
-[submodule "src/deps/libunwind"]
-	path = src/deps/libunwind
-	url = https://github.com/libunwind/libunwind.git
