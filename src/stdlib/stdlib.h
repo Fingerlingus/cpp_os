@@ -1,54 +1,30 @@
 #pragma once
 
-#include <stdint.h>
+#include <stddef.h>
 
-extern "C" void* memcpy(void* dest, const void* src, size_t n) {
-    for(size_t i = 0; i < n; i++)
-        ((char*)dest)[i] = ((char*)src)[i];
+#ifndef NO_RETURN
+#   define NO_RETURN [[noreturn]]
+#endif
 
-    return dest;
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern "C" void* memmove(void* dest, const void* src, size_t n) {
-    char buf[n];
-    for(size_t i = 0; i < n; i++)
-        buf[i] = ((char*)src)[i];
+void* malloc(size_t size);
+void* calloc(size_t size);
+void* realloc(void* ptr, size_t size);
+void free(void* ptr);
+void* memcpy(void* dest, const void* src, size_t n);
+void* memmove(void* dest, const void* src, size_t n);
+size_t strnlen(const char* s, size_t maxlen);
+int strncmp(const char* str1, const char* str2, size_t num);
+int memcmp(const void* str1, const void* str2, size_t num);
+#ifdef __cplusplus
+NO_RETURN void abort() noexcept;
+#else
+void abort();
+#endif
 
-    for(size_t i = 0; i < n; i++)
-        ((char*)dest)[i] = buf[i];
-
-    return dest;
-}
-
-extern "C" size_t strnlen(const char* s, size_t maxlen) {
-    for(size_t i = 0; i < maxlen; i++) {
-        if(s[i] == '\0')
-            return i;
-    }
-
-    return maxlen;
-}
-
-extern "C" int strncmp(const char* str1, const char* str2, size_t num) {
-    int s1_len = strnlen(str1, num);
-    int s2_len = strnlen(str2, num);
-
-    if(s1_len != s2_len)
-        return str1 > str2 ? 1 : -1;
-
-    for(size_t i = 0; i < num; i++) {
-        if(str1[i] != str2[i]) 
-            return str1 > str2 ? 1 : -1;
-    }
-
-    return 0;
-}
-
-extern "C" int memcmp(const void* str1, const void* str2, size_t num) {
-    for(size_t i = 0; i < num; i++) {
-        if(((const char*)str1)[i] != ((const char*)str2)[i]) 
-            return str1 > str2 ? 1 : -1;
-    }
-
-    return 0;
-}
+#ifdef __cplusplus
+} // extern "C"
+#endif

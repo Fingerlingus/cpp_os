@@ -7,6 +7,10 @@
 
 #include "efi.hpp"
 
+#ifndef NO_RETURN
+#   define NO_RETURN [[noreturn]]
+#endif
+
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should
 // be made volatile or equivalent.
@@ -41,7 +45,7 @@ volatile limine_kernel_address_request kernel_address_request = {
     .revision = 0
 };
 
-static void done(void) {
+NO_RETURN static void done(void) {
     for (;;) {
         __asm__("cli\n\thlt\n\t");
     }
