@@ -38,8 +38,8 @@ template<class T> constexpr void destroy_at(T* p) {
 template<class Alloc> struct allocator_traits {
 	using allocator_type = Alloc;
 	using value_type = typename allocator_type::value_type;
-	using pointer = typename allocator_type::pointer;
-	using const_pointer = typename allocator_type::const_pointer;
+	using pointer = value_type*;
+	using const_pointer = const value_type*;
 	using void_pointer = void*;
 	using const_void_pointer = const void*;
 	using difference_type = typename allocator_type::difference_type;
