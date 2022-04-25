@@ -200,7 +200,7 @@ template<typename Iter> concept random_access_iterator =
     };
 
 template<typename Iter>
-    requires bidirectional_iterator<Iter>
+//    requires bidirectional_iterator<Iter>
 class reverse_iterator {
 public:
     using value_type = Iter;
