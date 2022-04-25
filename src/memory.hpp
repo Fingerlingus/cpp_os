@@ -4,6 +4,10 @@
 
 #include "stdlib/list.hpp"
 
+#ifndef NO_DISCARD
+#	define NO_DISCARD [[nodiscard]]
+#endif
+
 constexpr uint32_t MEMBLOCK_MAGIC = 0x59A406B3;
 
 enum class MEMBLOCK_FLAGS : uint32_t {
@@ -19,5 +23,5 @@ struct memblock {
 
 nonstd::list<memblock*> free_blocks;
 
-extern "C" void* kmalloc(std::size_t);
+extern "C" NO_DISCARD void* kmalloc(std::size_t);
 extern "C" void kfree(void*);
