@@ -6,7 +6,6 @@ template <typename T> typename std::remove_reference_t<T>&& move(T&& arg) {
 	return static_cast<typename std::remove_reference_t<T>&&>(arg);
 }
 
-} // namespace nonstd
 template<typename T> constexpr bool always_false = false;
  
 template<typename T>
