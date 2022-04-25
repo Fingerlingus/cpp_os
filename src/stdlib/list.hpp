@@ -32,9 +32,9 @@ template<typename T> struct doubly_linked_list_node {
 	doubly_linked_list_node(pointer _prev, pointer _next = nullptr) 
         : prev(_prev), val(), next(_next) { }
 	doubly_linked_list_node(const_pointer _prev, const_pointer _next = nullptr)
-        : prev(static_cast<pointer>(_prev)), 
+        : prev(const_cast<pointer>(_prev)), 
           val(), 
-          next(static_cast<pointer>(_next)) 
+          next(const_cast<pointer>(_next)) 
     { 
 
     }
@@ -110,8 +110,11 @@ public:
 	using const_reference = const value_type&;
 	using node_pointer = doubly_linked_list_node<value_type>*;
 	using const_node_pointer = const doubly_linked_list_node<value_type>*;
+	using node_pointer_const = doubly_linked_list_node<const value_type>*;
 	using node_reference = doubly_linked_list_node<value_type>&;
+	using node_const_reference = const doubly_linked_list_node<const value_type>&;
 	using const_node_reference = const doubly_linked_list_node<value_type>&;
+	using const_node_const_reference = const doubly_linked_list_node<const value_type>&;
 	using iterator_category = bidirectional_iterator_tag;
 	using self_type = doubly_linked_list_iterator<value_type>;
 
@@ -120,9 +123,11 @@ public:
 	constexpr doubly_linked_list_iterator(self_type&&) = default; 
 
 	constexpr doubly_linked_list_iterator(const_node_pointer t) 
-        : m_ptr(static_cast<node_pointer>(t)) { }
+        : m_ptr((node_pointer)t) { }
 	constexpr doubly_linked_list_iterator(const_node_reference t) 
         : m_ptr(&static_cast<node_reference>(t)) { }
+	constexpr doubly_linked_list_iterator(const_node_const_reference t) requires (!same_as<value_type, const value_type>)
+        : m_ptr((node_pointer)&t) { }
 
 	constexpr self_type& operator--() {
 		m_ptr = m_ptr->prev;
@@ -257,9 +262,8 @@ public:
 	using allocator_type = Allocator;
 
     using node_type = doubly_linked_list_node<value_type>;
-	using node_const_type = doubly_linked_list_node<const value_type>;
 	using node_pointer = node_type*;
-	using node_const_pointer = node_const_type*;
+	using const_node_pointer = const node_type*;
 	using traits = allocator_traits<allocator_type>;
     using self_type = list<value_type, allocator_type>;
 
@@ -462,12 +466,12 @@ public:
 
 	// return iterator to front of container
 	iterator begin() noexcept {
-		return iterator(m_base);
+		return iterator((const_pointer)m_base);
 	}
 
 	// return const iterator to front of container
 	const_iterator begin() const noexcept {
-		return const_iterator(m_base);
+		return const_iterator((typename const_iterator::const_node_pointer)m_base);
 	}
 
 	const_iterator cbegin() const noexcept {
@@ -495,7 +499,7 @@ public:
 
 	// return const iterator to one element past the end
 	const_iterator end() const noexcept {
-		return const_iterator(&m_past_end);
+		return const_iterator((typename const_iterator::const_node_pointer)&m_past_end);
 	}
 
 	const_iterator cend() const noexcept {
@@ -629,8 +633,7 @@ public:
 		pos->next->prev = pos->prev;
 		iterator it(pos->next);
 		traits::destroy(m_alloc, pos.const_ptr());
-		traits::deallocate(const_cast<node_pointer>(pos.const_ptr()), 
-                           sizeof(*pos.const_ptr()));
+		traits::deallocate((node_pointer)pos.const_ptr(), sizeof(*pos.ptr()));
 
 		m_size--;
 
@@ -643,7 +646,7 @@ public:
 			++first;
 			erase(first->prev);
 		}
-		return iterator(last);
+		return iterator(last.const_ptr());
 	}
 
 	// add new element after last element
@@ -665,7 +668,7 @@ public:
 
 	// remove last element
 	void pop_back() {
-		erase(--cend());
+		erase(--end());
 	}
 
 	// add element before first element
@@ -688,7 +691,7 @@ public:
 	// remove first element
 	void pop_front() {
 		auto old_base = *m_base;
-		erase(cbegin());
+		erase(begin());
 		m_base = old_base.next;
 	}
 
@@ -733,12 +736,12 @@ public:
 	// TODO - sort
 
 protected:
+	node_pointer m_base;    // pointer to last element (end)
+	node_pointer m_head;    // pointer to first element (beginning)
 	node_type m_past_begin;	// element past beginning 
                             // (used to prevent dereferencing nullptr)
 	node_type m_past_end;	// element past end 
                             // (used to prevent dereferencing nullptr)
-	node_pointer m_base;    // pointer to last element (end)
-	node_pointer m_head;    // pointer to first element (beginning)
 	allocator_type m_alloc;	// allocator type
 	size_type m_size;	    // number of elements
 };
