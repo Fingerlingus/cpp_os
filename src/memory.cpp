@@ -1,17 +1,30 @@
 #include "memory.hpp"
 
 #include <cstdint>
+#include <new>
 
 #define HEAP_BASE nullptr
 #define MEMBLOCK_MAGIC 0x5A1C068D
 
-extern "C" void* kmalloc(std::size_t size) {
+#ifndef NO_DISCARD
+#	define NO_DISCARD [[nodiscard]]
+#endif
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
+NO_DISCARD void* kmalloc(std::size_t size) {
 	static char* free_memory_base = HEAP_BASE;
 	size = (size + 7) / 8 * 8;
 	free_memory_base += size;
 	return free_memory_base - size;
 }
 
-extern "C" void kfree(void*) {
+void kfree(void*) {
     return;
 }
+
+#ifdef __cplusplus
+	}
+#endif
