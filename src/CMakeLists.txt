@@ -20,9 +20,7 @@ target_compile_options(kernel PUBLIC -Wall -Wextra
                               -mcmodel=large -mno-avx -mno-avx2 -mno-red-zone
                               -fno-exceptions -fno-rtti
                               -I/usr/include/c++/11.2.0 
-                              -I/usr/include/c++/11.2.0/x86_64-pc-linux-gnu 
-                              -l/usr/local/lib/gcc/x86_64-elf/11.2.0/libgcc.a)
-
+                              -I/usr/include/c++/11.2.0/x86_64-pc-linux-gnu)
 target_compile_options(kernel PUBLIC $<$<CONFIG:Debug>:-O0 -g -Wpedantic>)
 target_compile_options(kernel PUBLIC $<$<CONFIG:RelWithDebInfo>:-03 -g>)
 target_compile_options(kernel PUBLIC $<$<CONFIG:Release>:-03>)
@@ -32,4 +30,4 @@ target_include_directories(kernel PUBLIC deps/libunwind/include)
 target_compile_definitions(kernel PUBLIC LIBCXXRT_WEAK_LOCKS)
 
 target_link_options(kernel PUBLIC -T ${PROJECT_SOURCE_DIR}/linker.ld -nostdlib 
-                                /usr/local/lib/gcc/x86_64-elf/11.3.0/libgcc.a)
+                                /usr/local/lib/gcc/x86_64-elf/11.2.0/libgcc.a)

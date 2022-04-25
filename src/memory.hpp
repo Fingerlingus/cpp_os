@@ -9,6 +9,7 @@
 #endif
 
 constexpr uint32_t MEMBLOCK_MAGIC = 0x59A406B3;
+constexpr void* HEAP_BASE = nullptr;
 
 enum class MEMBLOCK_FLAGS : uint32_t {
 
@@ -22,6 +23,7 @@ struct memblock {
 } __attribute__((packed));
 
 nonstd::list<memblock*> free_blocks;
+nonstd::list<memblock*> in_use_blocks;
 
-extern "C" NO_DISCARD void* kmalloc(std::size_t);
-extern "C" void kfree(void*);
+extern "C" NO_DISCARD void* kmalloc(std::size_t size);
+extern "C" void kfree(void* ptr);

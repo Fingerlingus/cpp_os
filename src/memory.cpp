@@ -3,9 +3,6 @@
 #include <cstdint>
 #include <new>
 
-#define HEAP_BASE nullptr
-#define MEMBLOCK_MAGIC 0x5A1C068D
-
 #ifndef NO_DISCARD
 #	define NO_DISCARD [[nodiscard]]
 #endif
