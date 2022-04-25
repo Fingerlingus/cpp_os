@@ -2,17 +2,8 @@
 
 #include <stdint.h>
 
-#include "macros.hpp"
-
-#ifndef EFIAPI
-#   if defined _MSC_EXTENSIONS
-#       define EFIAPI __cdecl
-#   elif defined __GNU_C__
-#       define EFIAPI ABI(msabi)
-#   else
-#       define EFIAPI
-#   endif
-#endif
+#define ABI(a) __attribute__((a))
+#define EFIAPI ABI(msabi)
 
 namespace efi {
 
