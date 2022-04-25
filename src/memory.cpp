@@ -12,7 +12,7 @@
 #endif
 
 NO_DISCARD void* kmalloc(std::size_t size) {
-	static char* free_memory_base = HEAP_BASE;
+	static char* free_memory_base = (char*)HEAP_BASE;
 	size = (size + 7) / 8 * 8;
 	free_memory_base += size;
 	return free_memory_base - size;
