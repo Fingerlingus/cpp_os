@@ -8,8 +8,8 @@
 #	define NO_DISCARD [[nodiscard]]
 #endif
 
-constexpr uint32_t MEMBLOCK_MAGIC = 0x59A406B3;
-constexpr void* HEAP_BASE = nullptr;
+inline static constexpr uint32_t MEMBLOCK_MAGIC = 0x59A406B3;
+inline static constexpr void* HEAP_BASE = nullptr;
 
 enum class MEMBLOCK_FLAGS : uint32_t {
 
