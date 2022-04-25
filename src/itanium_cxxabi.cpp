@@ -1,4 +1,4 @@
-#include "cxxabi.hpp"
+#include "itanium_cxxabi.hpp"
 
 #ifdef _cplusplus
 extern "C" {
