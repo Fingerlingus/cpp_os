@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
-add_executable(kernel init.cpp memory.cpp stdlib/stdlib.c)
+add_executable(kernel init.cpp itanium_cxxabi.cpp memory.cpp stdlib/stdlib.c stdlib/new.cpp)
 set_target_properties(kernel PROPERTIES SUFFIX ".elf")
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --target=x86_64)
