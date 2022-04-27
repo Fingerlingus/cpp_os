@@ -1,9 +1,5 @@
 #include "itanium_cxxabi.hpp"
 
-#ifdef _cplusplus
-extern "C" {
-#endif
- 
 atexit_func_entry_t __atexit_funcs[ATEXIT_MAX_FUNCS];
 uint32_t __atexit_func_count = 0;
  
@@ -32,4 +28,20 @@ void __cxa_finalize(void *f) {
 		(*__atexit_funcs[i].destructor_func)(__atexit_funcs[i].obj_ptr);
 		__atexit_funcs[i].destructor_func = 0;
 	}
+}
+ 
+int __cxa_guard_acquire (__guard *);
+void __cxa_guard_release (__guard *);
+void __cxa_guard_abort (__guard *);
+ 
+int __cxa_guard_acquire (__guard *g) {
+	return !*(char *)(g);
+}
+ 
+void __cxa_guard_release (__guard *g) {
+	*(char *)g = 1;
+}
+
+void __cxa_guard_abort (__guard *) {
+ 
 }
