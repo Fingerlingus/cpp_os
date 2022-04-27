@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create an empty zeroed out 64MiB image file.
-dd if=/dev/zero bs=1M count=0 seek=64 of=image.hdd
+dd if=/dev/zero bs=1M count=0 seek=1024 of=image.hdd
  
 # Create a GPT partition table.
 parted -s image.hdd mklabel gpt
