@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-namespace nonstd {
+namespace kstd {
 
 template<typename T>
 typename std::enable_if<std::is_object<T>::value, T*>::type 
@@ -69,4 +69,4 @@ template<class Alloc> struct allocator_traits {
 	}
 };
 
-} // namespace nonstd
+} // namespace kstd

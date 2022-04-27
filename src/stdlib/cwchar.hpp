@@ -2,8 +2,8 @@
 
 #include "wchar.h"
 
-namespace nonstd {
+namespace kstd {
 
 #include "wchar.h"
 
-} // namespace nonstd
+} // namespace kstd

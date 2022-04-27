@@ -8,7 +8,7 @@
 #   define NO_DISCARD [[nodiscard]]
 #endif
 
-namespace nonstd {
+namespace kstd {
 
 template<typename T> struct allocator {
 	using value_type = T;
@@ -45,5 +45,5 @@ template<class T1, class T2> constexpr bool operator!=(const allocator<T1>&,
 	return false;
 }
 
-} // namespace nonstd
+} // namespace kstd
 

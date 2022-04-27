@@ -2,7 +2,7 @@
 
 #include "cuchar.hpp"
 
-namespace nonstd {
+namespace kstd {
 
 using streamoff = long long;
 using streampos = mbstate_t;

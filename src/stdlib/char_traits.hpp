@@ -8,7 +8,7 @@
 #include "cwchar.hpp"
 #include "cstdlib.hpp"
 
-namespace nonstd {
+namespace kstd {
 
 template<typename CharT> class char_traits {
 public:
@@ -635,4 +635,4 @@ public:
 
 };
 
-} // namespace nonstd
+} // namespace kstd

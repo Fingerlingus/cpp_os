@@ -8,7 +8,7 @@
 #	define NO_DISCARD [[nodiscard]]
 #endif
 
-namespace nonstd {
+namespace kstd {
 
 template<typename E = int> class unexpected {
 public:
@@ -142,4 +142,4 @@ private:
 	bool m_is_unexpected;
 };
 
-} // namespace nonstd
+} // namespace kstd

@@ -11,7 +11,7 @@
 #   define NO_DISCARD [[nodiscard]]
 #endif
 
-namespace nonstd {
+namespace kstd {
 
 template<typename CharT, class Traits = char_traits<CharT>> 
 class basic_string_view {
@@ -449,4 +449,4 @@ constexpr wstring_view operator "" sv(const wchar_t* str,
 
 // TODO - template deduction guides
 
-} // namespace nonstd
+} // namespace kstd

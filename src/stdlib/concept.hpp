@@ -4,7 +4,7 @@
 
 #include "utility.hpp"
 
-namespace nonstd {
+namespace kstd {
 
 template<typename Derived, typename Base> concept derived_from =
   std::is_base_of_v<Base, Derived> &&
@@ -118,4 +118,4 @@ concept semiregular = copyable<T> && default_initializable<T>;
 
 template <typename T> concept regular = semiregular<T> && 
                                         equality_comparable<T>;
-} // namespace nonstd
+} // namespace kstd

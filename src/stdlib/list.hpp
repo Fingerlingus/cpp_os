@@ -14,7 +14,7 @@
 #   define NO_DISCARD [[nodiscard]]
 #endif
 
-namespace nonstd {
+namespace kstd {
 
 template<typename T> struct doubly_linked_list_node {
 	using value_type = T;
@@ -751,4 +751,4 @@ template<typename Iter, class Alloc = allocator<typename iterator_traits<Iter>::
 list(Iter, Iter, Alloc = Alloc())
   -> list<typename iterator_traits<Iter>::value_type, Alloc>;
 
-} // namespace nonstd
+} // namespace kstd

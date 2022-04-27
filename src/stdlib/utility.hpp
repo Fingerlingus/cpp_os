@@ -1,6 +1,6 @@
 #pragma once
 
-namespace nonstd {
+namespace kstd {
 
 template <typename T> typename std::remove_reference_t<T>&& move(T&& arg) {
 	return static_cast<typename std::remove_reference_t<T>&&>(arg);
@@ -23,5 +23,5 @@ template<typename T> T&& forward(typename std::remove_reference_t<T>&& t) noexce
     return static_cast<T&&>(t);
 }
 
-} // namespace nonstd
+} // namespace kstd
 

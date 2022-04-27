@@ -2,8 +2,8 @@
 
 #include "stdlib.h"
 
-namespace nonstd {
+namespace kstd {
 
 #include "stdlib.h"
 
-} // namespace nonstd
+} // namespace kstd

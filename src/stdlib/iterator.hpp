@@ -5,7 +5,7 @@
 #include "concept.hpp"
 #include "utility.hpp"
 
-namespace nonstd {
+namespace kstd {
 
 struct base_iterator_tag { };
 struct input_iterator_tag { };
@@ -286,4 +286,4 @@ constexpr Iter prev(Iter it,
     return it;
 }
 
-} // namespace nonstd
+} // namespace kstd
