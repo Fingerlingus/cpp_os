@@ -7,9 +7,13 @@
 
 #include "efi.hpp"
 
+#include "page_table.hpp"
+
 #ifndef NO_RETURN
 #   define NO_RETURN [[noreturn]]
 #endif
+
+extern const void* KERNEL_END;
 
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should
@@ -53,7 +57,7 @@ NO_RETURN static void done(void) {
 
 static void init_print(limine_terminal* terminal, 
                        limine_terminal_write write, 
-                       nonstd::string_view s) 
+                       kstd::string_view s) 
 {
     write(terminal, s.data(), s.length());
 }
@@ -123,6 +127,14 @@ extern "C" void _start(void) {
         kernel_virtual_base = 
             (void*)kernel_address_request.response->virtual_base;
     }
+    std::size_t kernel_size = 
+        (std::size_t)((char*)KERNEL_END - (char*)kernel_virtual_base);
+
+    std::size_t kernel_size_in_pages = 
+        kernel_size % 4096 == 0 ? kernel_size / 4096 : kernel_size / 4096 + 1;
+    
+    pt->init();
+    pt->alloc_pages(kernel_virtual_base, kernel_size_in_pages);
     // We're done, just hang...
     done();
 }
