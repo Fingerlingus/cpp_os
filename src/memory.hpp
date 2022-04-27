@@ -2,28 +2,23 @@
 
 #include <cstdint>
 
-#include "stdlib/list.hpp"
+#include "stdlib/array.hpp"
 
 #ifndef NO_DISCARD
 #	define NO_DISCARD [[nodiscard]]
 #endif
 
-inline static constexpr uint32_t MEMBLOCK_MAGIC = 0x59A406B3;
-inline static constexpr void* HEAP_BASE = nullptr;
+extern const void* const KHEAP_BEGIN;
 
-enum class MEMBLOCK_FLAGS : uint32_t {
+#ifdef KHEAP_INIT_SIZE
+    inline static constexpr std::size_t KHEAP_SIZE = KHEAP_INIT_SIZE;
+#else
+    inline static constexpr std::size_t KHEAP_SIZE = 0x2000000;
+#endif
 
-};
+inline const void* KHEAP_END = (void*)((char*)KHEAP_BEGIN + KHEAP_SIZE);
 
-struct memblock {
-    uint32_t magic = MEMBLOCK_MAGIC;
-    void* addr;
-    std::size_t size;
-    MEMBLOCK_FLAGS flags;
-} __attribute__((packed));
-
-nonstd::list<memblock*> free_blocks;
-nonstd::list<memblock*> in_use_blocks;
+bool kheap_init();
 
 extern "C" NO_DISCARD void* kmalloc(std::size_t size);
 extern "C" void kfree(void* ptr);
