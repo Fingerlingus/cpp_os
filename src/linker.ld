@@ -16,7 +16,7 @@ PHDRS {
  
 SECTIONS {
     . = 0xffffffff80000000; 
-
+    KERNEL_BEGIN = .;
     .text : {
         *(.text .text.*)
     } :text
@@ -39,4 +39,7 @@ SECTIONS {
         *(COMMON)
         *(.bss .bss.*)
     } :data
+    KERNEL_END = .;
+    KERNEL_SIZE = KERNEL_END - KERNEL_BEGIN;
+    KHEAP_BEGIN = .;
 }
