@@ -10,8 +10,8 @@
 
 extern const void* const KHEAP_BEGIN;
 
-#ifdef KHEAP_INIT_SIZE
-    inline static constexpr std::size_t KHEAP_SIZE = KHEAP_INIT_SIZE;
+#ifdef K_HEAP_INIT_SIZE
+    inline static constexpr std::size_t KHEAP_SIZE = K_HEAP_INIT_SIZE;
 #else
     inline static constexpr std::size_t KHEAP_SIZE = 0x2000000;
 #endif
