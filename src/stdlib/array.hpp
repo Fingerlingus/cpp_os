@@ -20,7 +20,7 @@ public:
 	using reference = value_type&;
 	using const_reference = const value_type&;
 	using pointer = value_type*;
-	using const_pointer = const pointer;
+	using const_pointer = const value_type*;
     using iterator = value_type*;
     using const_iterator = const value_type*;
     using const_reverse_iterator = reverse_iterator<const_iterator>;
