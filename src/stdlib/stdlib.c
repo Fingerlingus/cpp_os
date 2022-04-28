@@ -11,8 +11,8 @@ void* malloc(size_t size) {
     return kmalloc(size);
 }
 
-void* calloc(size_t size) {
-    return kmalloc(size);
+void* calloc(size_t num, size_t size) {
+    return kmalloc(num * size);
 }
 
 void* realloc(void* ptr, size_t size) {
@@ -27,7 +27,7 @@ void free(void* ptr) {
 
 void* memset(void* str, int c, size_t n) {
     for(size_t i = 0; i < n; i++)
-        ((int*)str)[i] = c;
+        ((unsigned char*)str)[i] = (unsigned char)c;
 
     return str;
 }
@@ -95,7 +95,7 @@ NO_RETURN void abort() noexcept {
 void abort() {
 #endif
     for(;;)
-        asm("cli\n\thlt\n\t");
+        __asm__("cli\n\thlt\n\t");
 }
 
 #ifdef __cplusplus
