@@ -7,7 +7,7 @@
 namespace mem {
 
 #ifdef K_VMEM_MAX
-    inline static constexpr std::size_t MAX_VIRTUAL_MEMORY = VMEM_MAX;
+    inline static constexpr std::size_t MAX_VIRTUAL_MEMORY = K_VMEM_MAX;
 #else
 	inline static constexpr std::size_t MAX_VIRTUAL_MEMORY = 0x200000000;
 #endif
@@ -31,14 +31,16 @@ inline constexpr std::size_t operator""_b(unsigned long long s) {
 
 class page_table {
 public:
-	inline page_table() { }
-    void init();
-	void* alloc_page(void* virt_addr = nullptr);
-	void* alloc_pages(void* virt_addr, std::size_t num_pages);
-	bool  dealloc_page(void* virt_addr);
-	bool  dealloc_pages(void* virt_addr, std::size_t num_pages);
+    void  init();
+	void* alloc_page(const void* virt_addr = nullptr);
+	void* alloc_pages(const void* virt_addr, std::size_t num_pages);
+	bool  dealloc_page(const void* virt_addr);
+	bool  dealloc_pages(const void* virt_addr, std::size_t num_pages);
+	void* to_phys_addr(const void* const virt_addr) const;
 	bool  is_virtually_allocated(const void* const virt_addr) const;
 	bool  is_physically_allocated(const void* const phys_addr) const;
+
+	inline page_table() { }
 
 	inline void* last_mapped_phys_addr() const {
 		return m_last_mapped_phys_addr;
@@ -65,7 +67,7 @@ public:
 	}
 
     inline void activate() const {
-		lcr3((void*)&m_pml4tes);
+		lcr3(to_phys_addr((void*)&m_pml4tes));
 	}
 
 private:
@@ -98,9 +100,9 @@ private:
 	kstd::array<void*, MAX_PAGES> m_allocated_pages;
     kstd::array<uint64_t, NUM_PHYS_ADDR_MAP_ENTRIES> m_phys_addr_map;
 
-	bool  unmap_virt_addr(void* virt_addr);
-	bool  unmap_phys_addr(void* phys_addr);
-	bool  map_phys_addr(void* phys_addr, void* virt_addr);
+	bool  unmap_virt_addr(const void* virt_addr);
+	bool  unmap_phys_addr(const void* phys_addr);
+	bool  map_phys_addr(const void* phys_addr, const void* virt_addr);
 	void* find_free_virt_addr() const;
 	void* find_free_phys_addr() const;
 };
