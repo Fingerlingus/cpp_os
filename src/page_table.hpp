@@ -3,6 +3,7 @@
 #include "stdlib/array.hpp"
 
 #include "asm_wrappers.hpp"
+#include "util.hpp"
 
 namespace mem {
 
@@ -31,22 +32,25 @@ inline constexpr std::size_t operator""_b(unsigned long long s) {
 
 class page_table {
 public:
+	using virtual_address = memory_address<void*>;
+	using physical_address = memory_address<void*>;
+
     void  init();
-	void* alloc_page(const void* virt_addr = nullptr);
-	void* alloc_pages(const void* virt_addr, std::size_t num_pages);
-	bool  dealloc_page(const void* virt_addr);
-	bool  dealloc_pages(const void* virt_addr, std::size_t num_pages);
-	void* to_phys_addr(const void* const virt_addr) const;
-	bool  is_virtually_allocated(const void* const virt_addr) const;
-	bool  is_physically_allocated(const void* const phys_addr) const;
+	void* alloc_page(virtual_address virt_addr = nullptr);
+	void* alloc_pages(virtual_address virt_addr, std::size_t num_pages);
+	bool  dealloc_page(virtual_address virt_addr);
+	bool  dealloc_pages(virtual_address virt_addr, std::size_t num_pages);
+	physical_address to_phys_addr(virtual_address virt_addr) const;
+	bool  is_virtually_allocated(virtual_address virt_addr) const;
+	bool  is_physically_allocated(physical_address phys_addr) const;
 
 	inline page_table() { }
 
-	inline void* last_mapped_phys_addr() const {
+	inline physical_address last_mapped_phys_addr() const {
 		return m_last_mapped_phys_addr;
 	}
 
-	inline void* last_mapped_virt_addr() const {
+	inline virtual_address last_mapped_virt_addr() const {
 		return m_last_mapped_virt_addr;
 	}
 
@@ -67,7 +71,7 @@ public:
 	}
 
     inline void activate() const {
-		lcr3(to_phys_addr((void*)&m_pml4tes));
+		lcr3(to_phys_addr((void*)&m_pml4tes).const_ptr());
 	}
 
 private:
@@ -95,16 +99,16 @@ private:
 	uint64_t m_pdptes[NUM_PML4TES][512] __attribute__((aligned(4096)));
 	uint64_t m_pml4tes[512] __attribute__((aligned(4096)));
 	//uint64_t m_pml5tes[NUM_PML5TES] __attribute__((aligned(4096)));
-	void* m_last_mapped_phys_addr;
-	void* m_last_mapped_virt_addr;
+	physical_address m_last_mapped_phys_addr;
+	virtual_address m_last_mapped_virt_addr;
 	kstd::array<void*, MAX_PAGES> m_allocated_pages;
     kstd::array<uint64_t, NUM_PHYS_ADDR_MAP_ENTRIES> m_phys_addr_map;
 
-	bool  unmap_virt_addr(const void* virt_addr);
-	bool  unmap_phys_addr(const void* phys_addr);
-	bool  map_phys_addr(const void* phys_addr, const void* virt_addr);
-	void* find_free_virt_addr() const;
-	void* find_free_phys_addr() const;
+	bool  unmap_virt_addr(virtual_address virt_addr);
+	bool  unmap_phys_addr(physical_address phys_addr);
+	bool  map_phys_addr(physical_address phys_addr, virtual_address virt_addr);
+	virtual_address find_free_virt_addr() const;
+	physical_address find_free_phys_addr() const;
 };
 
 } // namespace mem

@@ -40,36 +40,34 @@ void page_table::init() {
 	}
 }
 
-bool page_table::is_physically_allocated(const void* const phys_addr) const {
-	uint64_t phys_addr_u64 = reinterpret_cast<uint64_t>(phys_addr);
-	if (phys_addr_u64 & 0xFFF)
+bool page_table::is_physically_allocated(physical_address phys_addr) const {
+	if (phys_addr & 0xFFF)
 		return true;
 
-	if (phys_addr_u64 < 16_mb) // memory under 16MB guaranteed to be identity mapped
+	if (phys_addr < 16_mb) // memory under 16MB guaranteed to be identity mapped
 		return true;
 
 	if (phys_addr == m_last_mapped_phys_addr)
 		return true;
 
-	phys_addr_u64 &= ~0xFFF; // 4KB-align address
-	phys_addr_u64 /= PAGE_SIZE;
-	uint16_t page_index = phys_addr_u64 / m_phys_addr_map.size();
-	uint8_t  page_pos   = phys_addr_u64 % SIZE_IN_BITS(*m_phys_addr_map.data());
+	phys_addr &= ~0xFFF; // 4KB-align address
+	phys_addr /= PAGE_SIZE;
+	uintptr_t page_index = reinterpret_cast<uintptr_t>(phys_addr / m_phys_addr_map.size());
+	uintptr_t page_pos   = reinterpret_cast<uintptr_t>(phys_addr % SIZE_IN_BITS(*m_phys_addr_map.data()));
 	return (m_phys_addr_map[page_index] & (1 << page_pos)) != 0x00000000;
 }
 
-bool page_table::is_virtually_allocated(const void* const virt_addr) const {
-	uint64_t virt_addr_u64 = reinterpret_cast<uint64_t>(virt_addr);
-	if (virt_addr_u64 & 0xFFF)
+bool page_table::is_virtually_allocated(virtual_address virt_addr) const {
+	if (virt_addr & 0xFFF)
 		return true;
 
-	if (virt_addr_u64 < 0x1000000)
+	if (virt_addr < 0x1000000)
         return 1; // memory under 16MB guaranteed to be identity mapped
 
-	uint16_t pml4t_index = (virt_addr_u64 >> 39) & 0x01FF;
-	uint16_t pdpt_index  = (virt_addr_u64 >> 30) & 0x01FF;
-	uint16_t pdt_index   = (virt_addr_u64 >> 21) & 0x01FF;
-	uint16_t pt_index    = (virt_addr_u64 >> 12) & 0x01FF;
+	uint16_t pml4t_index = (virt_addr >> 39) & 0x01FF;
+	uint16_t pdpt_index  = (virt_addr >> 30) & 0x01FF;
+	uint16_t pdt_index   = (virt_addr >> 21) & 0x01FF;
+	uint16_t pt_index    = (virt_addr >> 12) & 0x01FF;
 
 	// if entries aren't present, page can't be allocated
 	if ((m_pml4tes[pml4t_index] & 0x01) == 0x00)
@@ -87,18 +85,16 @@ bool page_table::is_virtually_allocated(const void* const virt_addr) const {
 	return true;
 }
 
-bool page_table::map_phys_addr(const void* phys_addr, const void* virt_addr) {
-	uint64_t phys_addr_u64 = reinterpret_cast<uint64_t>(phys_addr);
-	uint64_t virt_addr_u64 = reinterpret_cast<uint64_t>(virt_addr);
-	uint16_t pml4t_index   = (virt_addr_u64 >> 39) & 0x01FF;
-	uint16_t pdpt_index    = (virt_addr_u64 >> 30) & 0x01FF;
-	uint16_t pdt_index     = (virt_addr_u64 >> 21) & 0x01FF;
-	uint16_t pt_index      = (virt_addr_u64 >> 12) & 0x01FF;
+bool page_table::map_phys_addr(physical_address phys_addr, virtual_address virt_addr) {
+	uint16_t pml4t_index   = (virt_addr >> 39) & 0x01FF;
+	uint16_t pdpt_index    = (virt_addr >> 30) & 0x01FF;
+	uint16_t pdt_index     = (virt_addr >> 21) & 0x01FF;
+	uint16_t pt_index      = (virt_addr >> 12) & 0x01FF;
 
-	if (virt_addr_u64 & 0xFFF)
+	if (virt_addr & 0xFFF)
 		return false;
 
-	if (phys_addr_u64 & 0xFFF)
+	if (phys_addr & 0xFFF)
 		return false;
 
 	// bail if page is already allocated
@@ -124,56 +120,56 @@ bool page_table::map_phys_addr(const void* phys_addr, const void* virt_addr) {
     if ((m_ptes[pml4t_index][pdpt_index][pdt_index][pt_index] & 0x03) != 0x03)
     {
 		 m_ptes[pml4t_index][pdpt_index][pdt_index][pt_index] = 
-             phys_addr_u64 | 0x03;
+             phys_addr | 0x03;
     }
 
-	phys_addr_u64 /= PAGE_SIZE;
-	uint16_t page_index = phys_addr_u64 / NUM_PHYS_ADDR_MAP_ENTRIES;
-	uint8_t  page_pos   = phys_addr_u64 % SIZE_IN_BITS(*m_phys_addr_map.data());
+	phys_addr /= PAGE_SIZE;
+	uint16_t page_index = phys_addr / NUM_PHYS_ADDR_MAP_ENTRIES;
+	uint8_t  page_pos   = phys_addr % SIZE_IN_BITS(*m_phys_addr_map.data());
 	m_phys_addr_map[page_index] |= (1 << page_pos);
 	return true;
 }
 
-void* page_table::alloc_page(const void* virt_addr) {
+void* page_table::alloc_page(virtual_address virt_addr) {
 	// else use address supplied if possible
-	if (reinterpret_cast<uint64_t>(virt_addr) & 0xFFF)
+	if (virt_addr & 0xFFF)
 		return nullptr;
 
 	// if no specific address is supplied, get a random one
-	if (virt_addr == nullptr) {
+	if (IS_NULL(virt_addr)) {
 		virt_addr = find_free_virt_addr();
-		if (virt_addr == nullptr)
+		if (IS_NULL(virt_addr))
 			return nullptr;
 	}
 
 	if (is_virtually_allocated(virt_addr))
-		return const_cast<void*>(virt_addr);
+		return const_cast<void*>(virt_addr.const_ptr());
 
-	void* phys_addr = find_free_phys_addr();
-	if (phys_addr == nullptr)
+	physical_address phys_addr = find_free_phys_addr();
+	if (IS_NULL(phys_addr))
 		return nullptr;
 	
 	// ...and map them
-	if (map_phys_addr(phys_addr, virt_addr) == false)
+	if (ERROR(map_phys_addr(phys_addr, virt_addr)))
 		return nullptr;
-	m_last_mapped_virt_addr = const_cast<void*>(virt_addr);
-	m_last_mapped_phys_addr = const_cast<void*>(phys_addr);
+	m_last_mapped_virt_addr = const_cast<void*>(virt_addr.const_ptr());
+	m_last_mapped_phys_addr = const_cast<void*>(phys_addr.const_ptr());
     for(auto& r : m_allocated_pages) {
-		if(r == nullptr)
-			r = const_cast<void*>(virt_addr);
+		if(IS_NULL(r))
+			r = const_cast<void*>(virt_addr.const_ptr());
     }
-	return const_cast<void*>(virt_addr);
+	return const_cast<void*>(virt_addr.const_ptr());
 }
 
-void* page_table::alloc_pages(const void* virt_addr, std::size_t num_pages) {
+void* page_table::alloc_pages(virtual_address virt_addr, std::size_t num_pages) {
     if(num_pages == 1) {
 		if (is_virtually_allocated(virt_addr))
-			return const_cast<void*>(virt_addr);
+			return const_cast<void*>(virt_addr.const_ptr());
         
         return alloc_page(virt_addr);
     }
     
-    char* c_virt_addr = (char*)virt_addr;
+    char* c_virt_addr = (char*)virt_addr.const_ptr();
     
     if(virt_addr != nullptr) {
         for(std::size_t i = 0; i < num_pages; i++) {
@@ -181,7 +177,7 @@ void* page_table::alloc_pages(const void* virt_addr, std::size_t num_pages) {
                 alloc_page(static_cast<void*>(c_virt_addr));
             c_virt_addr += PAGE_SIZE;
         }
-		return const_cast<void*>(virt_addr);
+		return const_cast<void*>(virt_addr.const_ptr());
     }
 
     while(c_virt_addr + (num_pages * PAGE_SIZE) < (char*)MAX_VIRTUAL_MEMORY) {
@@ -198,19 +194,18 @@ void* page_table::alloc_pages(const void* virt_addr, std::size_t num_pages) {
     return nullptr;
 }
 
-bool page_table::unmap_virt_addr(const void* virt_addr) {
-	uint64_t virt_addr_u64 = reinterpret_cast<uint64_t>(virt_addr);
-	if (virt_addr_u64 & 0xFFF)
+bool page_table::unmap_virt_addr(virtual_address virt_addr) {
+	if (virt_addr & 0xFFF)
 		return false;
 
 	// bail if page is already allocated
 	if (is_virtually_allocated(virt_addr))
 		return false;
 
-	uint16_t pml4t_index = (virt_addr_u64 >> 39) & 0x01FF;
-	uint16_t pdpt_index  = (virt_addr_u64 >> 30) & 0x01FF;
-	uint16_t pdt_index   = (virt_addr_u64 >> 21) & 0x01FF;
-	uint16_t pt_index    = (virt_addr_u64 >> 12) & 0x01FF;
+	uint16_t pml4t_index = (virt_addr >> 39) & 0x01FF;
+	uint16_t pdpt_index  = (virt_addr >> 30) & 0x01FF;
+	uint16_t pdt_index   = (virt_addr >> 21) & 0x01FF;
+	uint16_t pt_index    = (virt_addr >> 12) & 0x01FF;
 
 	// clear PT entry
 	m_ptes[pml4t_index][pdpt_index][pdt_index][pt_index] = 0x00000000;
@@ -218,35 +213,33 @@ bool page_table::unmap_virt_addr(const void* virt_addr) {
 	return true;
 }
 
-bool page_table::unmap_phys_addr(const void* phys_addr) {
-	if ((std::size_t)phys_addr & 0xFFF)
+bool page_table::unmap_phys_addr(physical_address phys_addr) {
+	if (phys_addr & 0xFFF)
 		return false;
 
 	if (!is_physically_allocated(phys_addr))
 		return false;
 
-	uint64_t phys_addr_u64 = reinterpret_cast<uint64_t>(phys_addr);
-	phys_addr_u64 /= PAGE_SIZE;
+	phys_addr /= PAGE_SIZE;
 
 	// and clear bit in phys_addr_map
-	uint16_t page_index = phys_addr_u64 / NUM_PHYS_ADDR_MAP_ENTRIES;
-	uint8_t  page_pos = phys_addr_u64 % SIZE_IN_BITS(*m_phys_addr_map.data());
+	uint16_t page_index = phys_addr / NUM_PHYS_ADDR_MAP_ENTRIES;
+	uint8_t  page_pos = phys_addr % SIZE_IN_BITS(*m_phys_addr_map.data());
 	m_phys_addr_map[page_index] &= ~(1 << page_pos);
 	return true;
 }
 
-bool page_table::dealloc_page(const void* virt_addr) {
-	uint64_t addr = reinterpret_cast<uint64_t>(virt_addr);
-	if (addr & ~0xFFF)
+bool page_table::dealloc_page(virtual_address virt_addr) {
+	if (virt_addr & ~0xFFF)
 		return false;
 
 	if (!is_virtually_allocated(virt_addr))
 		return false;
 
-	uint16_t pml4t_index = (addr >> 39) & 0x01FF;
-	uint16_t pdpt_index  = (addr >> 30) & 0x01FF;
-	uint16_t pdt_index   = (addr >> 21) & 0x01FF;
-	uint16_t pt_index    = (addr >> 12) & 0x01FF;
+	uint16_t pml4t_index = (virt_addr >> 39) & 0x01FF;
+	uint16_t pdpt_index  = (virt_addr >> 30) & 0x01FF;
+	uint16_t pdt_index   = (virt_addr >> 21) & 0x01FF;
+	uint16_t pt_index    = (virt_addr >> 12) & 0x01FF;
 
 	// bail if entries are not present
 	if ((m_pml4tes[pml4t_index] & 0x01) == 0x00000000)
@@ -271,25 +264,25 @@ bool page_table::dealloc_page(const void* virt_addr) {
 	return unmap_phys_addr(to_phys_addr(virt_addr));
 }
 
-bool page_table::dealloc_pages(const void* virt_addr, std::size_t num_pages) {
+bool page_table::dealloc_pages(virtual_address virt_addr, std::size_t num_pages) {
 	bool b = true;
 	for (std::size_t i = 0; i < num_pages; i++) {
-		if (dealloc_page(virt_addr) == false)
+		if (ERROR(dealloc_page(virt_addr)))
 			b = false;
 	}
 	return b;
 }
 
-void* page_table::find_free_virt_addr() const {
-	std::size_t test_vaddr;
+page_table::virtual_address page_table::find_free_virt_addr() const {
+	virtual_address test_vaddr;
 	if (m_last_mapped_virt_addr == nullptr)
 		test_vaddr = 16_mb;
 	else
-		test_vaddr = reinterpret_cast<uint64_t>(m_last_mapped_virt_addr) + 4096;
+		test_vaddr = m_last_mapped_virt_addr + 4096;
 
 	bool b = false;
 	for (; test_vaddr < MAX_VIRTUAL_MEMORY; test_vaddr += 4096) {
-		if (!is_virtually_allocated(reinterpret_cast<void*>(test_vaddr))) {
+		if (!is_virtually_allocated(test_vaddr)) {
 			b = true;
 			break;
 		}
@@ -297,19 +290,19 @@ void* page_table::find_free_virt_addr() const {
 	if (b == false)
 		return nullptr;
 
-	return reinterpret_cast<void*>(test_vaddr);
+	return test_vaddr;
 }
 
-void* page_table::find_free_phys_addr() const {
-	std::size_t test_paddr;
+page_table::physical_address page_table::find_free_phys_addr() const {
+	physical_address test_paddr;
 	if (m_last_mapped_phys_addr == nullptr)
 		test_paddr = 16_mb;
 	else
-		test_paddr = reinterpret_cast<uint64_t>(m_last_mapped_virt_addr) + 4096;
+		test_paddr = m_last_mapped_virt_addr + 4096;
 
 	bool b = false;
 	for (; test_paddr < MAX_VIRTUAL_MEMORY; test_paddr += 4096) {
-		if (!is_physically_allocated(reinterpret_cast<void*>(test_paddr))) {
+		if (!is_physically_allocated(test_paddr)) {
 			b = true;
 			break;
 		}
@@ -317,17 +310,16 @@ void* page_table::find_free_phys_addr() const {
 	if (b == false)
 		return nullptr;
 
-	return reinterpret_cast<void*>(test_paddr);
+	return test_paddr;
 }
 
-void* page_table::to_phys_addr(const void* const virt_addr) const {
-	uint64_t virt_addr_u64 = reinterpret_cast<uint64_t>(virt_addr);
-	uint16_t offset = virt_addr_u64 & 0xFFF;
+page_table::physical_address page_table::to_phys_addr(virtual_address virt_addr) const {
+	uint16_t offset = virt_addr & 0xFFF;
 
-	uint16_t pml4t_index = (virt_addr_u64 >> 39) & 0x01FF;
-	uint16_t pdpt_index  = (virt_addr_u64 >> 30) & 0x01FF;
-	uint16_t pdt_index   = (virt_addr_u64 >> 21) & 0x01FF;
-	uint16_t pt_index    = (virt_addr_u64 >> 12) & 0x01FF;
+	uint16_t pml4t_index = (virt_addr >> 39) & 0x01FF;
+	uint16_t pdpt_index  = (virt_addr >> 30) & 0x01FF;
+	uint16_t pdt_index   = (virt_addr >> 21) & 0x01FF;
+	uint16_t pt_index    = (virt_addr >> 12) & 0x01FF;
 
 	// bail if entries are not present
 	if ((m_pml4tes[pml4t_index] & 0x01) == 0x00000000)
@@ -339,10 +331,10 @@ void* page_table::to_phys_addr(const void* const virt_addr) const {
 	if ((m_pdtes[pml4t_index][pdpt_index][pdt_index] & 0x01) == 0x00000000)
 		return nullptr;
 
-	uint64_t phys_addr_u64 =
+	physical_address phys_addr =
 		(m_ptes[pml4t_index][pdpt_index][pt_index][pt_index] & ~0xFFF) + offset;
 
-	return reinterpret_cast<void*>(phys_addr_u64);
+	return phys_addr;
 }
 
 } // namespace mem
