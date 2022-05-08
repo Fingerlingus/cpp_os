@@ -134,7 +134,8 @@ extern "C" void _start(void) {
         kernel_size % 4096 == 0 ? kernel_size / 4096 : kernel_size / 4096 + 1;
     
     pt->init();
-    pt->alloc_pages(kernel_virtual_base, kernel_size_in_pages);
+    pt->alloc_page(kernel_virtual_base);
+    //pt->alloc_pages(kernel_virtual_base, kernel_size_in_pages);
     // We're done, just hang...
     done();
 }
