@@ -16,6 +16,11 @@ namespace mem {
 
 inline static constexpr std::size_t PT_SIZE = 512 * PAGE_SIZE;
 
+NO_RETURN inline static void halt() {
+    for(;;)
+        __asm__("cli\n\thlt\n\t");
+}
+
 void page_table::init() {
 	// zero all tables
 	memset_safe(&m_ptes, 0);
@@ -102,25 +107,26 @@ bool page_table::map_phys_addr(physical_address phys_addr, virtual_address virt_
 		return false;
 
     if ((m_pml4tes[pml4t_index] & 0x03) != 0x03) {
-		 m_pml4tes[pml4t_index] = 
+		m_pml4tes[pml4t_index] = 
             (uint64_t)(&m_pdptes[pml4t_index][pdpt_index]) | 0x03;
     }
 
     if ((m_pdptes[pml4t_index][pdpt_index] & 0x03) != 0x03) { 
-		 m_pdptes[pml4t_index][pdpt_index] = 
+        m_pdptes[pml4t_index][pdpt_index] = 
             (uint64_t)(&m_pdtes[pml4t_index][pdpt_index][pdt_index]) | 0x03;
     }
+    halt();
 
     if ((m_pdtes[pml4t_index][pdpt_index][pdt_index] & 0x03) != 0x03) { 
-		 m_pdtes[pml4t_index][pdpt_index][pdt_index] = 
+		m_pdtes[pml4t_index][pdpt_index][pdt_index] = 
             (uint64_t)(&m_ptes[pml4t_index][pdpt_index][pdt_index][pt_index]) |
-                0x03;
+                       0x03;
     }
 
     if ((m_ptes[pml4t_index][pdpt_index][pdt_index][pt_index] & 0x03) != 0x03)
     {
-		 m_ptes[pml4t_index][pdpt_index][pdt_index][pt_index] = 
-             phys_addr | 0x03;
+		m_ptes[pml4t_index][pdpt_index][pdt_index][pt_index] = 
+            phys_addr | 0x03;
     }
 
 	phys_addr /= PAGE_SIZE;
@@ -131,7 +137,6 @@ bool page_table::map_phys_addr(physical_address phys_addr, virtual_address virt_
 }
 
 void* page_table::alloc_page(virtual_address virt_addr) {
-	// else use address supplied if possible
 	if (virt_addr & 0xFFF)
 		return nullptr;
 
@@ -152,8 +157,8 @@ void* page_table::alloc_page(virtual_address virt_addr) {
 	// ...and map them
 	if (ERROR(map_phys_addr(phys_addr, virt_addr)))
 		return nullptr;
-	m_last_mapped_virt_addr = const_cast<void*>(virt_addr.const_ptr());
-	m_last_mapped_phys_addr = const_cast<void*>(phys_addr.const_ptr());
+	m_last_mapped_virt_addr = virt_addr.const_ptr();
+	m_last_mapped_phys_addr = phys_addr.const_ptr();
     for(auto& r : m_allocated_pages) {
 		if(IS_NULL(r))
 			r = const_cast<void*>(virt_addr.const_ptr());
