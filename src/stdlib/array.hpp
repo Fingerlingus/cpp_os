@@ -39,11 +39,11 @@ public:
 	}
 
 	constexpr reference operator[](size_type pos) {
-		return data()[pos];
+		return at(pos);
 	}
 
 	constexpr const_reference operator[](size_type pos) const {
-		return data()[pos];
+		return at(pos);
 	}
 
 	constexpr reference front() {
