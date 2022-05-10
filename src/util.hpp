@@ -28,6 +28,7 @@ public:
 	using self_type = memory_address<T>;
 	using pointer = T;
 	using const_pointer = const T;
+    using integral_type = std::uintptr_t;
 
 	constexpr memory_address()
 		: m_p(nullptr) 
@@ -41,86 +42,92 @@ public:
 
 	}
 
-	constexpr memory_address(std::uintptr_t u)
+	constexpr memory_address(integral_type u)
 		: m_u(u) {
 
 	}
 
 	template<typename U> constexpr memory_address(const U* p)
-		: m_p(static_cast<const_pointer>(p)) 
+		: m_p(static_cast<const_pointer>(const_cast<U*>(p))) 
 	{
 		
 	}
 
 	constexpr self_type& operator=(const_pointer p) {
-		m_p = p;
+		m_p = const_cast<pointer>(p);
+        return *this;
 	}
 
 	template<typename U>
 		requires std::integral<U>
 	constexpr self_type& operator=(U u) {
 		m_u = u;
+        return *this;
 	}
 
 	constexpr operator const_pointer() const {
 		return m_p;
 	}
 
-	template<typename U>
-		requires std::integral<U>
-	constexpr self_type& operator+(U u) const {
-		return reinterpret_cast<const_pointer>(m_u + u);
-	}
+    constexpr operator bool() const {
+        return m_p != nullptr;
+    }
 
 	template<typename U>
 		requires std::integral<U>
-	constexpr self_type& operator-(U u) const {
-		return reinterpret_cast<const_pointer>(m_u - u);
-	}
-
-	template<typename U> constexpr self_type& operator+(const U* u) const {
-		return reinterpret_cast<const_pointer>(static_cast<U*>(m_p) + u);
-	}
-
-	template<typename U> constexpr self_type& operator-(const U* u) const {
-		return reinterpret_cast<const_pointer>(static_cast<U*>(m_p) - u);
-	}
+	constexpr integral_type operator+(U u) const {
+	    return m_u + u;
+    }
 
 	template<typename U>
 		requires std::integral<U>
-	constexpr self_type& operator/(U u) const {
-		return reinterpret_cast<const_pointer>(m_u / u);
-	}
+	constexpr integral_type operator-(U u) const {
+	    return m_u - u;
+    }
 
-	template<typename U>
-		requires std::integral<U>
-	constexpr self_type& operator%(U u) const {
-		return reinterpret_cast<const_pointer>(m_u % u);
+	template<typename U> constexpr integral_type operator+(const U* u) const {
+	    return static_cast<U*>(m_p) + u;
+    }
+
+	template<typename U> constexpr integral_type operator-(const U* u) const {
+	    return static_cast<U*>(m_p) - u;
 	}
 
 	template<typename U>
 		requires std::integral<U>
-	constexpr self_type& operator&(U u) const {
-		return reinterpret_cast<const_pointer>(m_u & u);
-	}
+	constexpr integral_type operator/(U u) const {
+	    return m_u / u;
+    }
 
 	template<typename U>
 		requires std::integral<U>
-	constexpr self_type& operator|(U u) const {
-		return reinterpret_cast<const_pointer>(m_u | u);
-	}
+	constexpr integral_type operator%(U u) const {
+	    return m_u % u;
+    }
 
 	template<typename U>
 		requires std::integral<U>
-	constexpr self_type& operator>>(U u) const {
-		return reinterpret_cast<const_pointer>(m_u >> u);
-	}
+	constexpr integral_type operator&(U u) const {
+	    return m_u & u;
+    }
 
 	template<typename U>
 		requires std::integral<U>
-	constexpr self_type& operator<<(U u) const {
-		return reinterpret_cast<const_pointer>(m_u << u);
-	}
+	constexpr integral_type operator|(U u) const {
+	    return m_u | u;
+    }
+
+	template<typename U>
+		requires std::integral<U>
+	constexpr integral_type operator>>(U u) const {
+	    return m_u >> u;
+    }
+
+	template<typename U>
+		requires std::integral<U>
+	constexpr integral_type operator<<(U u) const {
+	    return m_u << u;
+    }
 
 	template<typename U>
 		requires std::integral<U>
@@ -193,13 +200,11 @@ public:
 		return m_p;
 	}
 
-	constexpr operator pointer() = delete;
-	//constexpr operator std::uintptr_t() = delete;
 
 private:
 	union {
-		const_pointer m_p;
-		std::uintptr_t m_u;
+		pointer m_p;
+		integral_type m_u;
 	};
 };
 
@@ -236,7 +241,8 @@ bool operator<(const memory_address<T>& lhs, const U* const rhs) {
 template<typename T, typename U>
 	requires std::integral<U>
 bool operator<(const memory_address<T>& lhs, U rhs) {
-	return reinterpret_cast<U>(lhs.const_ptr()) < rhs;
+	return reinterpret_cast<std::uintptr_t>(lhs.const_ptr()) < 
+           static_cast<std::uintptr_t>(rhs);
 }
 
 template<typename T, typename U = T>
@@ -252,7 +258,7 @@ bool operator>(const memory_address<T>& lhs, const U* const rhs) {
 template<typename T, typename U>
 	requires std::integral<U>
 bool operator>(const memory_address<T>& lhs, U rhs) {
-	return reinterpret_cast<U>(lhs.const_ptr()) > rhs;
+	return reinterpret_cast<std::intptr_t>(lhs.const_ptr()) > rhs;
 }
 
 template<typename T> inline constexpr uint8_t SIZE_IN_BITS() {
